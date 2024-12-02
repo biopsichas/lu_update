@@ -12,6 +12,39 @@ import matplotlib.pyplot as plt
 import psycopg2
 from psycopg2 import sql
 
+def raster_stats(raster_path):
+    """
+    Count the number of pixels in each category in a raster file.
+
+    Parameters:
+    raster_path (str): The path to the file of the raster file.
+
+    Returns:
+    pd_values (pandas.DataFrame): A DataFrame with the unique values, their counts, and the area in km^2.
+    """
+    # Open the raster file and read the image
+    with rasterio.Env():
+        with rasterio.open(raster_path) as src:
+            image = src.read(1)
+
+            transform = src.transform
+
+            # Cell size (resolution)
+            cell_width = transform.a  # Pixel width
+            cell_height = -transform.e  #
+
+            # Count unique values and their frequencies
+            unique, counts = np.unique(image, return_counts=True)
+
+            # Create DataFrame with counts and map them with SWATCODE
+            pd_values = pd.DataFrame({
+                'ID': unique.astype(int),
+                'Count': counts,
+                'Area_km2': (counts * cell_width * cell_height) / 1000000  # Convert to km^2 assuming pixel size is 25m x 25m
+            })
+
+    return pd_values
+
 def check_crs(gdf):
     """
     Check if the CRS of a GeoDataFrame is EPSG:3346 and convert it if necessary.

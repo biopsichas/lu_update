@@ -19,10 +19,13 @@ rasterize_layers = True
 merge_rasters = True
 # 3. Create statistics for the merged raster
 create_statistics = True
+# 4. Compare the rasterized data with the previous version
+compare_to_previous = True
 
+startTime_full = time.time()
 # Create a rasterized version of the cropped data
 if rasterize_layers:
-    startTime_full = startTime = time.time()
+    startTime = time.time()
     ctr = 1  # Counter for the ID column
     for c, layer in enumerate(data_source.keys()):
         # Data read and coordinates checked
@@ -84,57 +87,82 @@ if merge_rasters:
 if create_statistics:
     startTime = time.time()
     # Open the raster file and read the image
-    with rasterio.Env():
-        with rasterio.open(cropped_path + 'merged_output.tif') as src:
-            image = src.read(1)
+    pd_values = raster_stats(cropped_path + 'merged_output.tif')
+    # Merge with the id DataFrame
+    id = pd.merge(pd.read_csv(cropped_path + 'legend.csv', usecols=['ID', 'LU']),
+                  pd.read_excel('lookup.xlsx'), left_on="LU", right_on="globalcode", how="left")
+    pd_values_transposed = pd.merge(id, pd_values, on='ID', how='left')
 
-            # Count unique values and their frequencies
-            unique, counts = np.unique(image, return_counts=True)
+    # Save detailed sum
+    pd_values_transposed.to_csv(cropped_path + 'detailed_sums.csv', encoding='utf-8-sig', index=False)
 
-            # Create DataFrame with counts and map them with SWATCODE
-            pd_values = pd.DataFrame({
-                'ID': unique.astype(int),
-                'Count': counts,
-                'Area_km2': (counts * resolution ** 2) / 1000000  # Convert to km^2 assuming pixel size is 25m x 25m
-            })
+    # Group by SWATCODE and sum the areas
+    pd_values_transposed['SWATCODE'] = pd_values_transposed['SWATCODE'].fillna('Not in legend')
+    ppd = pd_values_transposed[['SWATCODE', 'Area_km2']].groupby('SWATCODE', as_index=False).sum()
 
-            # Merge with the id DataFrame
-            id = pd.read_csv(cropped_path + 'legend.csv')
-            pd_values_transposed = pd.merge(id, pd_values, on = 'ID', how='left')
+    # Round the 'Area_km2' column to 2 decimal places
+    ppd['Area_km2'] = ppd['Area_km2'].round(2)
+    total_area = ppd['Area_km2'].sum()
+    ppd['Area_%'] = (ppd['Area_km2'] / total_area) * 100
+    ppd['Area_%'] = ppd['Area_%'].round(2)
 
-            # Save detailed sum
-            pd_values_transposed.to_csv(cropped_path + 'detailed_sums.csv', encoding='utf-8-sig', index=False)
+    # Save summarized sum
+    ppd.to_csv(cropped_path + 'sums.csv', encoding='utf-8-sig', index=False)
+    # Sort the DataFrame by 'Area_%' in descending order
+    ppd_sorted = ppd.sort_values('Area_%', ascending=False)
 
-            # Group by SWATCODE and sum the areas
-            pd_values_transposed['SWATCODE'] = pd_values_transposed['SWATCODE'].fillna('Not in legend')
-            ppd = pd_values_transposed[['SWATCODE', 'Area_km2']].groupby('SWATCODE', as_index=False).sum()
+    # Plotting
+    plt.figure(figsize=(10, 6))
+    plt.bar(ppd_sorted['SWATCODE'], ppd_sorted['Area_%'], color='skyblue')
+    plt.xticks(rotation=90, ha='right')
+    plt.xlabel('SWATCODE')
+    plt.ylabel('Area (%)')
+    plt.title('Area (%) by SWATCODE')
+    plt.tight_layout()
+    plt.savefig(cropped_path + 'swatcode_area_plot.png', format='png')
 
-            # Round the 'Area_km2' column to 2 decimal places
-            ppd['Area_km2'] = ppd['Area_km2'].round(2)
-            total_area = ppd['Area_km2'].sum()
-            ppd['Area_%'] = (ppd['Area_km2'] / total_area) * 100
-            ppd['Area_%'] = ppd['Area_%'].round(2)
+    print("Statistics created")
+    print("=== STEP 3 is DONE. ===")
 
-            # Save summarized sum
-            ppd.to_csv(cropped_path + 'sums.csv', encoding='utf-8-sig', index=False)
-            # Sort the DataFrame by 'Area_%' in descending order
-            ppd_sorted = ppd.sort_values('Area_%', ascending=False)
+# Compare to the previous land use map
+if compare_to_previous:
+    startTime = time.time()
+    # Read the previous land use map
+    pd_values = raster_stats(raster_prv)
+    id = get_table_data(db_params).rename(columns={'swatcode':'SWATCODE', 'raster_id':'ID'})
+    pd_values_transposed = pd.merge(id, pd_values, on='ID', how='left')
+    pd_new = pd.read_csv(cropped_path + 'sums.csv')
 
-            # Plotting
-            plt.figure(figsize=(10, 6))
-            plt.bar(ppd_sorted['SWATCODE'], ppd_sorted['Area_%'], color='skyblue')
-            plt.xticks(rotation=90, ha='right')
-            plt.xlabel('SWATCODE')
-            plt.ylabel('Area (%)')
-            plt.title('Area (%) by SWATCODE')
-            plt.tight_layout()
-            plt.savefig(cropped_path + 'swatcode_area_plot.png', format='png')
-            time_used(startTime_full)
-            print("Statistics created")
-            print("=== STEP 3 is DONE. ===")
-            # Show the plot
-            plt.show()
+    df = pd.concat([pd_values_transposed[['SWATCODE', 'Area_km2']].assign(Type='Old'),
+                    pd_new[['SWATCODE', 'Area_km2']].assign(Type='New')], axis=0, ignore_index=True)
+    df_grouped = df.groupby('Type')['Area_km2'].sum()
+    print(df_grouped)
+    df_pivot = df.pivot(index='SWATCODE', columns='Type', values='Area_km2')
+    df_pivot['new_%'] = round(100 * df_pivot['New'] / df_grouped['New'],2)
+    df_pivot['old_%'] = round(100 * df_pivot['Old'] / df_grouped['Old'],2)
+    df_pivot['diff_%'] = round(df_pivot['new_%'] - df_pivot['old_%'],2)
 
-# df = get_table_data(db_params)
+    # Sort the DataFrame by 'Area_%' in descending order
+    df_pivot_sorted = df_pivot.sort_values('diff_%', ascending=True)
+    # Pivot the data so that each SWATCODE has both Old and New areas
+
+    df_pivot.to_csv(cropped_path + 'compare_sums.csv', encoding='utf-8-sig', index=True)
+    # Plot configuration
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    df_pivot_sorted['diff_%'].plot(kind='barh', color='skyblue')
+    # Add labels and title
+    plt.xlabel('Precentage (%)')
+    plt.ylabel('SWAT code')
+    plt.title('Bar Plot of difference in area (%) by SWAT code (New% - Old%)')
+    plt.tight_layout()
+    plt.savefig(cropped_path + 'comparison_plot.png', format='png')
+    print("Data compared")
+    print("=== STEP 4 is DONE. ===")
+    print()
+
+## End of the script
+print("=== SCRIPT FINISHED ===")
+time_used(startTime_full)
 
 
