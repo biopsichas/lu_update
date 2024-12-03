@@ -2,6 +2,8 @@ from functions import *
 from rasterio.features import shapes
 from shapely.geometry import shape
 
+startTime = time.time()
+print("Processing the impervious layer")
 geo_path = "G:\\LIFE_AAA\\swat_lt\\Data\\LandUse\\Geoland\\imperv.tif"
 with rasterio.open(geo_path) as src:
     data = src.read(1)
@@ -33,8 +35,18 @@ with rasterio.open(geo_path) as src:
         else None,
         axis=1
     )
+
+    print("The impervious layer is converted to a GeoDataFrame and reclassed")
     gdf = check_crs(gdf)
     # Save the result to a shapefile
     gdf = gdf[["Cat", "geometry"]]
+    # Clip the data to the boundary
+    boundary = gpnd.read_file("bnd.geojson")
+    boundary = check_crs(boundary)
+    gdf = gpnd.clip(gdf, boundary)
+    print("The impervious layer is clipped")
     gdf.to_file("G:\\LIFE_AAA\\swat_lt\\Data\\LandUse\\Landuse_update\\2024\\inputs\\imperv2024.gpkg", layer='imperv', driver="GPKG")
-    print(gdf.head())
+    print("The impervious layer is saved to a GeoPackage")
+    time_used(startTime)
+    print("=== STEP 0 is DONE. ===")
+

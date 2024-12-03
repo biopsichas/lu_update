@@ -21,9 +21,11 @@ merge_rasters = True
 create_statistics = True
 # 4. Compare the rasterized data with the previous version
 compare_to_previous = True
+# 5. Create the final raster for the LT SWAT model and final lookup table for the PostGress database
+create_final_raster = True
 
 startTime_full = time.time()
-# Create a rasterized version of the cropped data
+# Create a rasterized version of the data
 if rasterize_layers:
     startTime = time.time()
     ctr = 1  # Counter for the ID column
@@ -122,7 +124,9 @@ if create_statistics:
     plt.savefig(cropped_path + 'swatcode_area_plot.png', format='png')
 
     print("Statistics created")
+    time_used(startTime)
     print("=== STEP 3 is DONE. ===")
+    print()
 
 # Compare to the previous land use map
 if compare_to_previous:
@@ -158,11 +162,52 @@ if compare_to_previous:
     plt.tight_layout()
     plt.savefig(cropped_path + 'comparison_plot.png', format='png')
     print("Data compared")
+    time_used(startTime)
     print("=== STEP 4 is DONE. ===")
+    print()
+
+# Create the final raster
+if create_final_raster:
+    startTime = time.time()
+    # Read the lookup tables and create a new
+    old_id = pd.read_csv(cropped_path + 'detailed_sums.csv', usecols=['ID', 'SWATCODE'])
+    new_id = pd.read_csv(cropped_path + 'compare_sums.csv', usecols=['SWATCODE']).assign(IDn=lambda x: x.index+1)
+    lookup_id = pd.merge(old_id, new_id, on='SWATCODE', how='left')
+    # Create a lookup dictionary
+    lookup_dict = dict(zip(lookup_id['ID'], lookup_id['IDn']))
+
+    # Read raster data
+    with rasterio.open(cropped_path + 'merged_output.tif') as src:
+        raster_data = src.read(1)  # Read the first band (usually the main raster layer)
+        transform = src.transform
+        crs = src.crs
+
+    # Modify raster values based on lookup table
+    modified_raster = np.copy(raster_data)
+    for old_value, new_value in lookup_dict.items():
+        modified_raster[raster_data == old_value] = new_value
+
+    # Save the modified raster
+    with rasterio.open(
+            cropped_path + "LUraster.tif",
+            'w',
+            driver='GTiff',
+            count=1,
+            dtype=modified_raster.dtype,
+            crs=crs,
+            transform=transform,
+            width=raster_data.shape[1],
+            height=raster_data.shape[0]
+    ) as dest:
+        dest.write(modified_raster, 1)
+    # Save the lookup table
+    new_id.rename(columns={'SWATCODE': 'swatcode', 'IDn': 'raster_id'}).to_csv(cropped_path + 'landuse_swat_raster_lookup.csv', encoding='utf-8-sig', index=False)
+    print("Final raster created and lookup table saved")
+    print("Please use 'LUraster.tif' and landuse_swat_raster_lookup.csv' for model update")
+    time_used(startTime)
+    print("=== STEP 5 is DONE. ===")
     print()
 
 ## End of the script
 print("=== SCRIPT FINISHED ===")
 time_used(startTime_full)
-
-
