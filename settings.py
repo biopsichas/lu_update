@@ -18,8 +18,8 @@ data_source = {
                   "G:\\LIFE_AAA\\swat_lt\\Data\\LandUse\\Landuse_update\\2024\\inputs\\abandoned_2024.gpkg"),
     "gdr": (
     "GKODAS", "G", "gdr2024", "G:\\LIFE_AAA\\swat_lt\\Data\\LandUse\\Landuse_update\\2024\\inputs\\gdr2024.gpkg"),
-    "urban": (
-    "Cat", "U", "imperv", "G:\\LIFE_AAA\\swat_lt\\Data\\LandUse\\Landuse_update\\2024\\inputs\\imperv2024.gpkg")
+    "imperv2024": (
+    "Cat", "U", "imperv2024", "G:\\LIFE_AAA\\swat_lt\\Data\\LandUse\\Landuse_update\\2024\\inputs\\imperv2024.gpkg")
 }
 
 # Coordinates if clip is required (just change the no_clip = False to work)
