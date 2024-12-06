@@ -40,4 +40,4 @@ db_params = {
     "port": "5444"  # Replace with your PostgreSQL port
 }
 
-raster_prv = "G:\\LIFE_AAA\\swat_lt\\Projects\\Setup_2020_common\\Data\\Rasters\\LUraster.tif"
+raster_prv = "G:\\LIFE_AAA\\swat_lt\\Projects\\Setup_2020_common\\Data\\Rasters\\LUraster_bck.tif"

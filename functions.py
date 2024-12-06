@@ -11,7 +11,8 @@ from rasterio.transform import from_bounds
 import matplotlib.pyplot as plt
 import psycopg2
 from psycopg2 import sql
-from sqlalchemy import create_engine, text
+# from osgeo import gdal
+# from sqlalchemy import create_engine, text
 
 def raster_stats(raster_path):
     """
@@ -191,8 +192,8 @@ def rasterize_layer(gdf, layer_name, res_pth, bbox = None, resolution = 5):
 
     if bbox is None:
         # Define the default bounding box if not provided
-        xmn, ymn = 306500, 5973500
-        xmx, ymx = 680100, 6257800
+        xmn, ymn = 302520.129681604, 5969274.628977455
+        xmx, ymx = 684120.129681604, 6261824.628977455
         bbox = (xmn, ymn, xmx, ymx)
 
     # Calculate the transformation matrix for the raster based on the bounding box
@@ -210,7 +211,7 @@ def rasterize_layer(gdf, layer_name, res_pth, bbox = None, resolution = 5):
         out_shape=out_shape,
         transform=transform,
         fill=0,  # Fill value for areas outside geometries
-        dtype="float32"
+        dtype="int16"
     )
 
     # Write the rasterized data to a GeoTIFF file
@@ -221,7 +222,7 @@ def rasterize_layer(gdf, layer_name, res_pth, bbox = None, resolution = 5):
             height=out_shape[0],  # Height of the raster grid
             width=out_shape[1],  # Width of the raster grid
             count=1,  # Number of bands (1 for single-band raster)
-            dtype="float32",  # Data type of the raster values
+            dtype="int16",  # Data type of the raster values
             crs=gdf.crs,  # Coordinate Reference System from the GeoDataFrame
             transform=transform  # Transformation matrix to map raster grid to spatial coordinates
     ) as dst:

@@ -16,13 +16,13 @@ from functions import *
 
 # Switches for the operations (activate as needed)
 # 1. Create a rasterized version of the cropped data
-rasterize_layers = True
+rasterize_layers = False
 # 2. Merge the rasterized layers into a single raster
-merge_rasters = True
+merge_rasters = False
 # 3. Create statistics for the merged raster
-create_statistics = True
+create_statistics = False
 # 4. Compare the rasterized data with the previous version
-compare_to_previous = True
+compare_to_previous = False
 # 5. Create the final raster for the LT SWAT model and final lookup table for the PostGress database
 create_final_raster =True
 
@@ -75,7 +75,7 @@ if merge_rasters:
             merged = raster_overlay(merged, layer, cropped_path)  # Use the previous merged result
 
     # Update the metadata
-    meta.update(dtype=rasterio.float32, count=1)
+    meta.update(dtype=rasterio.int16, count=1)
 
     # Write the merged raster to a new file
     with rasterio.open(cropped_path + 'merged_output.tif', 'w', **meta) as dst:
@@ -189,6 +189,7 @@ if create_final_raster:
             nodata_value = 0
         raster_data[raster_data == 0] = nodata_value
         metadata = src.meta.copy()
+        metadata['dtype'] = 'uint8'  # Set data type to uint8
         metadata['nodata'] = nodata_value
 
         # Modify raster values based on lookup table
@@ -196,13 +197,14 @@ if create_final_raster:
         for old_value, new_value in lookup_dict.items():
             modified_raster[raster_data == old_value] = new_value
 
+        modified_raster_uint8 = modified_raster.astype('uint8')
         # Save the modified raster
         with rasterio.open(
                 cropped_path + "LUraster.tif",
                 'w',
                 **metadata
         ) as dest:
-            dest.write(modified_raster, 1)
+            dest.write(modified_raster_uint8, 1)
     # Save the lookup table
     new_id.rename(columns={'SWATCODE': 'swatcode', 'IDn': 'raster_id'}).to_csv(cropped_path + 'landuse_swat_raster_lookup.csv', encoding='utf-8-sig', index=False)
     print("Final raster created and lookup table saved")
