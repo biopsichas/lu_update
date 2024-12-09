@@ -5,26 +5,24 @@ the rasterized layers, and creates statistics for the merged raster. The script 
 file. Land use data is prepared for the LT SWAT model system.
 
 Created on: 2024-11-29
-Modified on: 2024-11-29
+Modified on: 2024-12-09
 Author: Svajunas Plunge
 Email: svajunas_plunge@sggw.edu.pl
 
 """
-import sys
-
 from functions import *
 
 # Switches for the operations (activate as needed)
 # 1. Create a rasterized version of the cropped data
-rasterize_layers = False
+rasterize_layers = True
 # 2. Merge the rasterized layers into a single raster
-merge_rasters = False
+merge_rasters = True
 # 3. Create statistics for the merged raster
-create_statistics = False
+create_statistics = True
 # 4. Compare the rasterized data with the previous version
-compare_to_previous = False
+compare_to_previous = True
 # 5. Create the final raster for the LT SWAT model and final lookup table for the PostGress database
-create_final_raster =True
+create_final_raster = True
 
 startTime_full = time.time()
 # Create a rasterized version of the data
@@ -206,47 +204,18 @@ if create_final_raster:
         ) as dest:
             dest.write(modified_raster_uint8, 1)
     # Save the lookup table
-    new_id.rename(columns={'SWATCODE': 'swatcode', 'IDn': 'raster_id'}).to_csv(cropped_path + 'landuse_swat_raster_lookup.csv', encoding='utf-8-sig', index=False)
+    new_id.rename(columns={'SWATCODE': 'swatcode', 'IDn': 'raster_id'}).to_csv(cropped_path +
+                                                                               'landuse_swat_raster_lookup.csv',
+                                                                               encoding='utf-8-sig', index=False)
     print("Final raster created and lookup table saved")
     print("Please use 'LUraster.tif' and landuse_swat_raster_lookup.csv' for model update")
     time_used(startTime)
     print("=== STEP 5 is DONE. ===")
     print()
 
-# df = pd.read_csv(cropped_path + 'landuse_swat_raster_lookup.csv')
-# df.index = range(1, len(df) + 1)
-# connection_string = (
-#     f"postgresql://{db_params['user']}:{db_params['password']}"
-#     f"@{db_params['host']}:{db_params['port']}/{db_params['dbname']}"
-# )
-# print(connection_string)
-#
-# # Database connection using SQLAlchemy
-# engine = create_engine(connection_string)
-#
-# # Rename table if it exists
-# table_name_bck = "BACKUP_landuse_swat_raster_lookup"
-# table_name = "landuse_swat_raster_lookup"
-#
-# with engine.connect() as conn:
-#     # Rename the table if it exists
-#     rename_query = f"""
-#     DO $$
-#     BEGIN
-#         IF EXISTS (SELECT 1 FROM information_schema.tables
-#                    WHERE table_schema = 'landuse'
-#                    AND table_name = 'landuse_swat_raster_lookup') THEN
-#             ALTER TABLE landuse_swat_raster_lookup RENAME TO landuse_swat_raster_lookup_bck;
-#         END IF;
-#     END $$;
-#     """
-#     conn.execute(text(rename_query))
-#
-# # Write the DataFrame to the new table
-# # df.to_sql(table_name, engine, if_exists='replace', index=False)
-# print(f"Table '{table_name}' created and DataFrame inserted successfully!")
-
-
 ## End of the script
 print("=== SCRIPT FINISHED ===")
 time_used(startTime_full)
+print("Your outputs are saved in the folder: '"
+      + cropped_path + "LUraster.tif'. Please use this file for SWAT model update. "
+                       "It should be placed manually in the 'Projects\Setup_2020_common\Data\Rasters' folder.")

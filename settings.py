@@ -2,11 +2,12 @@
 
 projectDir = "G:\\LIFE_AAA\\swat_lt\\"
 dataDir = projectDir + "Data\\"  # Data directory
-gdb_path = dataDir + "LandUse\\landuse.gdb"  # Path to the geodatabase
-# Path to the output directory
+gdb_path = dataDir + "LandUse\\landuse.gdb"  # Path Landuse to the geodatabase
+# Path to the output directory (where the results will be stored)
 cropped_path = "Temp\\"
 
-# Data source settings, layer names, and land use column, and the letter to identify codes
+# Data source settings, layer names, and land use column, and the letter to identify codes. The sequence is important!!!
+# Later dataset is used if NA values are present in the earlier datasets.
 data_source = {
     "crops": (
     "KODAS", "C", "Crops2024", "G:\\LIFE_AAA\\swat_lt\\Data\\LandUse\\Landuse_update\\2024\\inputs\\Crops2024.gpkg"),
@@ -22,7 +23,7 @@ data_source = {
     "Cat", "U", "imperv2024", "G:\\LIFE_AAA\\swat_lt\\Data\\LandUse\\Landuse_update\\2024\\inputs\\imperv2024.gpkg")
 }
 
-# Coordinates if clip is required (just change the no_clip = False to work)
+# Coordinates, if clip is required to test on small area (don't forget to comment out the bbox = None to work)
 # xmn, ymn = 475237, 6178256
 # xmx, ymx = 486495, 6187595
 # bbox = (xmn, ymn, xmx, ymx)
@@ -40,4 +41,5 @@ db_params = {
     "port": "5444"  # Replace with your PostgreSQL port
 }
 
+# Define the previous land use raster path
 raster_prv = "G:\\LIFE_AAA\\swat_lt\\Projects\\Setup_2020_common\\Data\\Rasters\\LUraster_bck.tif"

@@ -11,8 +11,7 @@ from rasterio.transform import from_bounds
 import matplotlib.pyplot as plt
 import psycopg2
 from psycopg2 import sql
-# from osgeo import gdal
-# from sqlalchemy import create_engine, text
+
 
 def raster_stats(raster_path):
     """
