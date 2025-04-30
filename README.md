@@ -5,7 +5,7 @@ This repository contains Python scripts and tools for processing geospatial land
 ## Project Overview
 
 - **Created on**: 2024-11-29  
-- **Last Modified**: 2024-12-09  
+- **Last Modified**: 2025-04-30  
 - **Author**: Svajunas Plunge  
 - **Email**: svajunas_plunge@sggw.edu.pl  
 
@@ -24,6 +24,7 @@ The scripts process land use data from various sources (e.g., crops, forests, im
 LT-SWAT-LandUse-Processing/
 ├── docs/                  # Documentation folder (if applicable)
 ├── Temp/                  # Temporary output folder for intermediate files
+├── imperv_process.py     # Preprocesses a raster file representing impervious land (optional).
 ├── functions.py          # Core functions for data processing
 ├── settings.py           # Configuration settings (data paths, parameters)
 ├── main.py               # Main script to execute the workflow
