@@ -5,7 +5,7 @@ the rasterized layers, and creates statistics for the merged raster. The script 
 file. Land use data is prepared for the LT SWAT model system.
 
 Created on: 2024-11-29
-Modified on: 2024-12-09
+Modified on: 2025-04-30
 Author: Svajunas Plunge
 Email: svajunas_plunge@sggw.edu.pl
 
@@ -49,8 +49,9 @@ if rasterize_layers:
         ctr = lookup_idx["ID"].max() + 1
 
     # Save the ID and LU columns to a separate legend file
-    pd.merge(df, gpnd.read_file(gdb_path, layer="globallookup").loc[:, ['globalcode', 'SWATCODE']], left_on='LU',
+    pd.merge(df, pd.read_excel(mylookup), left_on='LU',
              right_on='globalcode', how='left').to_csv(cropped_path + 'legend.csv', encoding='utf-8-sig', index=False)
+
     time_used(startTime)
     print("Data rasterized")
     print("=== STEP 1 is DONE. ===")
@@ -210,12 +211,12 @@ if create_final_raster:
     print("Final raster created and lookup table saved")
     print("Please use 'LUraster.tif' and landuse_swat_raster_lookup.csv' for model update")
     time_used(startTime)
+    print("Your outputs are saved in the folder: '"
+          + cropped_path + "LUraster.tif'. Please use this file for SWAT model update. "
+                           "It should be placed manually in the 'Projects\Setup_2020_common\Data\Rasters' folder.")
     print("=== STEP 5 is DONE. ===")
     print()
 
 ## End of the script
 print("=== SCRIPT FINISHED ===")
 time_used(startTime_full)
-print("Your outputs are saved in the folder: '"
-      + cropped_path + "LUraster.tif'. Please use this file for SWAT model update. "
-                       "It should be placed manually in the 'Projects\Setup_2020_common\Data\Rasters' folder.")

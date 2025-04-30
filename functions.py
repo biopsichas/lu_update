@@ -141,6 +141,13 @@ def clean_attibutes(gdf, column_name, new_name):
             if row[column_name] not in ['pu0', 'pu3']
             else None, axis=1
         )
+    # If new_name is "M", create a more complex 'LU' value based on conditions
+    elif new_name == "M":
+        gdf["LU"] = gdf.apply(
+            lambda row: f"{new_name}_{row[column_name]}"
+            if row[column_name] in ['pu0', 'pu3']
+            else None, axis=1
+        )
 
     # For any other value of new_name, concatenate new_name with the values in column_name
     else:
@@ -261,9 +268,14 @@ def raster_overlay(first_layer, second_layer, res_pth):
         with rasterio.open(res_pth + first_layer + ".tif") as src_a:
             a_data = src_a.read(1)  # Read the first band of A
 
-    # Read the second layer data from the file
-    with rasterio.open(res_pth + second_layer + ".tif") as src_b:
-        b_data = src_b.read(1)  # Read the first band of B
+    # if ends res_pth with ".tif"
+    if res_pth.endswith(".tif"):
+        with rasterio.open(res_pth) as src_b:
+            b_data = src_b.read(1)  # Read the first band of B
+    else:
+        # If res_pth is a directory, read the second layer data from the file
+        with rasterio.open(res_pth + second_layer + ".tif") as src_b:
+            b_data = src_b.read(1)
 
     # Perform the raster overlay: where the first layer has a value of 0, take the value from the second layer
     merged_data = np.where(a_data == 0, b_data, a_data)

@@ -1,4 +1,5 @@
 # Data paths and settings
+mylookup = "lookup.xlsx"  # Path to the lookup table
 
 projectDir = "G:\\LIFE_AAA\\swat_lt\\"
 dataDir = projectDir + "Data\\"  # Data directory
@@ -20,7 +21,9 @@ data_source = {
     "gdr": (
     "GKODAS", "G", "gdr2024", "G:\\LIFE_AAA\\swat_lt\\Data\\LandUse\\Landuse_update\\2024\\inputs\\gdr2024.gpkg"),
     "imperv2024": (
-    "Cat", "U", "imperv2024", "G:\\LIFE_AAA\\swat_lt\\Data\\LandUse\\Landuse_update\\2024\\inputs\\imperv2024.gpkg")
+    "Cat", "U", "imperv2024", "G:\\LIFE_AAA\\swat_lt\\Data\\LandUse\\Landuse_update\\2024\\inputs\\imperv2024.gpkg"),
+    "gdr2": (
+    "GKODAS", "M", "gdr2024", "G:\\LIFE_AAA\\swat_lt\\Data\\LandUse\\Landuse_update\\2024\\inputs\\gdr2024.gpkg")
 }
 
 # Coordinates, if clip is required to test on small area (don't forget to comment out the bbox = None to work)
